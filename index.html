@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CyberShield — Cyber Security News Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1525;
+    --bg3: #141c30;
+    --card: #111827;
+    --card2: #1a2235;
+    --border: rgba(0,255,180,0.12);
+    --border2: rgba(0,255,180,0.25);
+    --accent: #00ffb4;
+    --accent2: #00c8ff;
+    --accent3: #ff4d7e;
+    --accent4: #ffd700;
+    --text: #e8edf5;
+    --text2: #8896b0;
+    --text3: #4a5568;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+    --red: #ff4d4d;
+    --orange: #ff8c42;
+    --green: #00e676;
+    --blue: #00c8ff;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top:0; z-index:100;
+    background: rgba(10,14,26,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 1.1rem; font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .nav-brand svg { width:28px; height:28px; }
+  .nav-tabs { display:flex; gap:4px; }
+  .nav-tab {
+    padding: 6px 14px; border-radius: 6px;
+    border: none; background: none;
+    color: var(--text2); font-family: var(--sans); font-size: 0.8rem;
+    cursor: pointer; transition: all 0.2s;
+    font-weight: 500; letter-spacing: 0.03em;
+  }
+  .nav-tab.active, .nav-tab:hover { background: rgba(0,255,180,0.1); color: var(--accent); }
+  .nav-status {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 0.7rem; color: var(--text2);
+  }
+  .pulse { width:8px; height:8px; border-radius:50%; background: var(--green); position:relative; }
+  .pulse::after {
+    content:''; position:absolute; inset:-3px; border-radius:50%;
+    border: 1px solid var(--green); animation: ping 1.5s infinite;
+  }
+  @keyframes ping { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(2)} }
+
+  /* PANELS */
+  .panel { display:none; padding: 1.5rem 2rem; }
+  .panel.active { display:block; }
+
+  /* HERO STRIP */
+  .hero-strip {
+    background: linear-gradient(90deg, rgba(0,255,180,0.06) 0%, transparent 60%);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .hero-title { font-family: var(--mono); font-size: 1.2rem; color: var(--accent); }
+  .hero-sub { font-size: 0.78rem; color: var(--text2); margin-top:3px; }
+  .stat-chips { display:flex; gap:1rem; }
+  .stat-chip { text-align:center; }
+  .stat-chip .val { font-family:var(--mono); font-size:1.4rem; font-weight:600; }
+  .stat-chip .lbl { font-size:0.65rem; color:var(--text2); text-transform:uppercase; letter-spacing:.07em; }
+
+  /* CARDS GRID */
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.2rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border2); }
+  .card-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-family: var(--mono); font-size: 0.72rem;
+    color: var(--text2); text-transform: uppercase; letter-spacing:.1em;
+    display:flex; align-items:center; gap:6px;
+  }
+  .dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .dot-green { background: var(--green); }
+  .dot-red { background: var(--red); }
+  .dot-blue { background: var(--blue); }
+  .dot-yellow { background: var(--accent4); }
+
+  /* NEWS FEED */
+  .news-item {
+    padding: 0.85rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer; transition: background 0.15s;
+    border-radius: 6px; padding-left:8px; margin-left:-8px;
+  }
+  .news-item:last-child { border-bottom:none; }
+  .news-item:hover { background: rgba(0,255,180,0.04); }
+  .news-meta {
+    display: flex; align-items:center; gap:8px;
+    margin-bottom: 5px;
+  }
+  .badge {
+    font-family:var(--mono); font-size:0.62rem; font-weight:600;
+    padding: 2px 7px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing:.06em;
+  }
+  .badge-critical { background:rgba(255,77,77,0.15); color:var(--red); border:1px solid rgba(255,77,77,0.3); }
+  .badge-high { background:rgba(255,140,66,0.15); color:var(--orange); border:1px solid rgba(255,140,66,0.3); }
+  .badge-medium { background:rgba(255,215,0,0.12); color:var(--accent4); border:1px solid rgba(255,215,0,0.25); }
+  .badge-low { background:rgba(0,230,118,0.1); color:var(--green); border:1px solid rgba(0,230,118,0.25); }
+  .badge-info { background:rgba(0,200,255,0.1); color:var(--blue); border:1px solid rgba(0,200,255,0.25); }
+  .news-time { font-family:var(--mono); font-size:0.65rem; color:var(--text3); }
+  .news-source { font-size:0.65rem; color:var(--text3); }
+  .news-title { font-size:0.85rem; color:var(--text); line-height:1.4; margin-bottom:3px; }
+  .news-desc { font-size:0.75rem; color:var(--text2); line-height:1.5; }
+
+  /* SEARCH BAR */
+  .search-bar {
+    display:flex; gap:8px; margin-bottom:1rem;
+  }
+  .search-input {
+    flex:1; background:var(--card2); border:1px solid var(--border);
+    border-radius:8px; padding: 8px 14px;
+    font-family:var(--mono); font-size:0.8rem; color:var(--text);
+    outline:none; transition:border-color 0.2s;
+  }
+  .search-input:focus { border-color:var(--accent); }
+  .search-input::placeholder { color:var(--text3); }
+  .filter-btn {
+    background:var(--card2); border:1px solid var(--border);
+    border-radius:8px; padding:8px 14px;
+    font-family:var(--mono); font-size:0.75rem; color:var(--text2);
+    cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  }
+  .filter-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(0,255,180,0.08); }
+  .filter-btn:hover { border-color:var(--border2); color:var(--text); }
+
+  /* CHARTS */
+  .chart-wrap { position:relative; }
+
+  /* THREAT GAUGE */
+  .gauge-wrap { display:flex; justify-content:center; padding: 1rem 0; }
+  .gauge-svg { overflow:visible; }
+
+  /* BAR CHART */
+  .bar-chart { display:flex; flex-direction:column; gap:10px; padding: 0.5rem 0; }
+  .bar-row { display:flex; align-items:center; gap:10px; }
+  .bar-label { font-family:var(--mono); font-size:0.7rem; color:var(--text2); width:90px; text-align:right; flex-shrink:0; }
+  .bar-track { flex:1; height:8px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:4px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+  .bar-val { font-family:var(--mono); font-size:0.7rem; color:var(--text2); width:35px; text-align:right; }
+
+  /* LIVE MONITOR */
+  .terminal {
+    background:#060a12; border:1px solid rgba(0,255,180,0.2);
+    border-radius:8px; padding:1rem; font-family:var(--mono);
+    font-size:0.72rem; height:260px; overflow-y:auto;
+    line-height:1.7;
+  }
+  .terminal::-webkit-scrollbar { width:4px; }
+  .terminal::-webkit-scrollbar-thumb { background:rgba(0,255,180,0.2); border-radius:2px; }
+  .log-line { display:block; margin-bottom:1px; }
+  .log-time { color:var(--text3); }
+  .log-type-crit { color:var(--red); font-weight:600; }
+  .log-type-warn { color:var(--orange); }
+  .log-type-info { color:var(--blue); }
+  .log-type-ok { color:var(--green); }
+  .log-msg { color:var(--text); }
+  .log-ip { color:var(--accent2); }
+
+  /* SPARKLINE */
+  .sparkline-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .spark-label { font-size:0.72rem; color:var(--text2); width:130px; }
+  .spark-svg { flex:1; height:30px; }
+  .spark-val { font-family:var(--mono); font-size:0.72rem; font-weight:600; width:50px; text-align:right; }
+
+  /* IP INTEL */
+  .ip-input-row { display:flex; gap:8px; margin-bottom:1rem; }
+  .ip-input {
+    flex:1; background:var(--card2); border:1px solid var(--border);
+    border-radius:8px; padding:8px 14px;
+    font-family:var(--mono); font-size:0.82rem; color:var(--accent);
+    outline:none; transition:border-color 0.2s; letter-spacing:.05em;
+  }
+  .ip-input:focus { border-color:var(--accent); }
+  .btn-primary {
+    background:rgba(0,255,180,0.12); border:1px solid var(--accent);
+    border-radius:8px; padding:8px 18px;
+    font-family:var(--mono); font-size:0.78rem; color:var(--accent);
+    cursor:pointer; transition:all 0.2s; font-weight:600;
+  }
+  .btn-primary:hover { background:rgba(0,255,180,0.2); }
+  .ip-result-card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:10px; padding:1.2rem;
+  }
+  .ip-field-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 7px 0; border-bottom:1px solid rgba(255,255,255,0.04);
+    font-size:0.8rem;
+  }
+  .ip-field-row:last-child { border-bottom:none; }
+  .ip-field-key { color:var(--text2); font-family:var(--mono); font-size:0.72rem; }
+  .ip-field-val { color:var(--text); font-weight:500; }
+  .risk-pill {
+    display:inline-block; padding:3px 12px; border-radius:20px;
+    font-family:var(--mono); font-size:0.72rem; font-weight:600;
+  }
+
+  /* WORLDMAP SVG PLACEHOLDER */
+  .world-map-wrap {
+    border-radius:8px; overflow:hidden;
+    position:relative; background:#060a12;
+    border:1px solid var(--border);
+  }
+
+  /* KNOWLEDGE HUB */
+  .glossary-search {
+    width:100%; background:var(--card2); border:1px solid var(--border);
+    border-radius:8px; padding:10px 16px;
+    font-family:var(--mono); font-size:0.82rem; color:var(--text);
+    outline:none; margin-bottom:1rem; transition:border-color 0.2s;
+  }
+  .glossary-search:focus { border-color:var(--accent); }
+  .glossary-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .glos-card {
+    background:var(--card2); border:1px solid var(--border);
+    border-radius:10px; padding:1.1rem; cursor:pointer;
+    transition:all 0.2s; position:relative;
+  }
+  .glos-card:hover { border-color:var(--border2); transform:translateY(-1px); }
+  .glos-term { font-family:var(--mono); font-size:0.82rem; color:var(--accent); font-weight:600; margin-bottom:6px; }
+  .glos-category { font-size:0.65rem; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px; }
+  .glos-def { font-size:0.78rem; color:var(--text2); line-height:1.5; }
+  .glos-sev {
+    position:absolute; top:1rem; right:1rem;
+    font-family:var(--mono); font-size:0.62rem; font-weight:600;
+    padding:2px 8px; border-radius:4px;
+  }
+
+  /* CVE TABLE */
+  .cve-table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+  .cve-table th {
+    font-family:var(--mono); font-size:0.65rem; color:var(--text3);
+    text-transform:uppercase; letter-spacing:.08em;
+    padding:8px 10px; border-bottom:1px solid var(--border);
+    text-align:left; font-weight:500;
+  }
+  .cve-table td { padding:9px 10px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+  .cve-table tr:last-child td { border-bottom:none; }
+  .cve-table tr:hover td { background:rgba(0,255,180,0.03); }
+  .cvss-bar { display:flex; align-items:center; gap:8px; }
+  .cvss-track { width:70px; height:5px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; }
+  .cvss-fill { height:100%; border-radius:3px; }
+
+  /* SCROLLBAR GLOBAL */
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
+
+  /* REFRESH INDICATOR */
+  .refresh-tag {
+    font-family:var(--mono); font-size:0.65rem; color:var(--text3);
+    display:flex; align-items:center; gap:5px;
+  }
+  .spin { animation: spin 1s linear infinite; display:inline-block; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* RESPONSIVE */
+  @media(max-width:900px) {
+    .grid-2, .grid-3, .grid-4, .glossary-grid { grid-template-columns:1fr; }
+    nav { padding:0 1rem; }
+    .panel { padding:1rem; }
+    .stat-chips { gap:0.8rem; }
+  }
+
+  /* CHART.JS CANVAS */
+  .chart-container { position:relative; height:200px; width:100%; }
+
+  /* THREAT METER */
+  .threat-meter-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .threat-level-label { font-family:var(--mono); font-size:1.8rem; font-weight:600; }
+  .threat-level-sub { font-size:0.72rem; color:var(--text2); }
+
+  /* ANIMATED COUNTER */
+  .counter { font-family:var(--mono); font-size:2.2rem; font-weight:700; line-height:1; }
+
+  /* SECTION LABEL */
+  .sec-label {
+    font-family:var(--mono); font-size:0.65rem; color:var(--text3);
+    text-transform:uppercase; letter-spacing:.12em;
+    margin-bottom:0.8rem; display:flex; align-items:center; gap:8px;
+  }
+  .sec-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* MAP THREAT DOTS */
+  @keyframes ripple {
+    0%{r:4;opacity:0.8} 100%{r:14;opacity:0}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 2L4 6V14C4 19.5 8.4 24.7 14 26C19.6 24.7 24 19.5 24 14V6L14 2Z" stroke="#00ffb4" stroke-width="1.5" fill="none"/>
+      <path d="M10 14l3 3 5-5" stroke="#00ffb4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    CyberShield
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPanel('news', this)">// News Feed</button>
+    <button class="nav-tab" onclick="showPanel('analytics', this)">// Threat Analytics</button>
+    <button class="nav-tab" onclick="showPanel('monitor', this)">// Live Monitor</button>
+    <button class="nav-tab" onclick="showPanel('ip', this)">// IP &amp; Source Intel</button>
+    <button class="nav-tab" onclick="showPanel('knowledge', this)">// Knowledge Hub</button>
+  </div>
+  <div class="nav-status">
+    <div class="pulse"></div>
+    <span id="clockDisplay">--:--:--</span> UTC
+    <span id="refreshTag" class="refresh-tag" style="margin-left:8px;">AUTO-REFRESH 3s</span>
+  </div>
+</nav>
+
+<!-- =========== PANEL 1: NEWS FEED =========== -->
+<div id="panel-news" class="panel active">
+  <div class="hero-strip">
+    <div>
+      <div class="hero-title">// CYBER SECURITY NEWS AGGREGATOR</div>
+      <div class="hero-sub">Real-time threat intelligence • CVE alerts • Industry reports</div>
+    </div>
+    <div class="stat-chips">
+      <div class="stat-chip"><div class="counter val-total" style="color:var(--accent)">0</div><div class="lbl">Stories Today</div></div>
+      <div class="stat-chip"><div class="counter val-critical" style="color:var(--red)">0</div><div class="lbl">Critical</div></div>
+      <div class="stat-chip"><div class="counter val-cve" style="color:var(--orange)">0</div><div class="lbl">New CVEs</div></div>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <input class="search-input" id="newsSearch" placeholder="Search threats, CVEs, vendors..." oninput="filterNews()" />
+    <button class="filter-btn active" onclick="setFilter(this,'all')">All</button>
+    <button class="filter-btn" onclick="setFilter(this,'critical')">Critical</button>
+    <button class="filter-btn" onclick="setFilter(this,'high')">High</button>
+    <button class="filter-btn" onclick="setFilter(this,'medium')">Medium</button>
+    <button class="filter-btn" onclick="setFilter(this,'malware')">Malware</button>
+    <button class="filter-btn" onclick="setFilter(this,'cve')">CVE</button>
+  </div>
+
+  <div class="grid-2" style="gap:1rem; align-items:start;">
+    <div class="card" style="grid-column:1/2;">
+      <div class="card-header">
+        <div class="card-title"><div class="dot dot-red"></div>BREAKING &amp; CRITICAL</div>
+        <div class="refresh-tag" id="feedRefreshTag">↻ live</div>
+      </div>
+      <div id="newsFeed"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><div class="dot dot-blue"></div>TOP CVEs (24h)</div>
+        </div>
+        <div id="cveList"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><div class="dot dot-green"></div>THREAT CATEGORIES</div>
+        </div>
+        <div class="bar-chart" id="categoryChart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== PANEL 2: THREAT ANALYTICS =========== -->
+<div id="panel-analytics" class="panel">
+  <div class="hero-strip">
+    <div>
+      <div class="hero-title">// THREAT ANALYTICS</div>
+      <div class="hero-sub">Visual intelligence • Attack patterns • Severity distribution</div>
+    </div>
+    <div class="stat-chips">
+      <div class="stat-chip"><div class="counter" style="color:var(--red)" id="threatScore">8.4</div><div class="lbl">Global Threat Score</div></div>
+      <div class="stat-chip"><div class="counter" style="color:var(--orange)" id="activeThreats">247</div><div class="lbl">Active Threats</div></div>
+      <div class="stat-chip"><div class="counter" style="color:var(--blue)" id="patchedToday">89</div><div class="lbl">Patched Today</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="gap:1rem; margin-bottom:1rem;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><div class="dot dot-red"></div>CVSS SEVERITY DISTRIBUTION</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="severityChart" role="img" aria-label="Bar chart of CVE severity distribution across Critical, High, Medium, Low categories">CVSS severity: Critical 42, High 87, Medium 134, Low 61.</canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><div class="dot dot-blue"></div>ATTACK VECTORS (7-DAY)</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="vectorChart" role="img" aria-label="Doughnut chart of attack vectors including Network, Social Engineering, Physical, and Supply Chain">Attack vectors: Network 54%, Social Engineering 22%, Physical 8%, Supply Chain 16%.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="gap:1rem; margin-bottom:1rem;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><div class="dot dot-yellow"></div>THREAT TIMELINE (30 DAYS)</div>
+      </div>
+      <div class="chart-container" style="height:220px;">
+        <canvas id="timelineChart" role="img" aria-label="Line chart showing daily threat volume over the past 30 days">Daily threats trending upward over 30 days.</canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><div class="dot dot-green"></div>TOP TARGETED SECTORS</div>
+      </div>
+      <div class="bar-chart" style="margin-top:0.5rem;" id="sectorChart"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><div class="dot dot-red"></div>ACTIVE CVE TRACKER</div>
+    </div>
+    <table class="cve-table">
+      <thead>
+        <tr>
+          <th>CVE ID</th>
+          <th>Vulnerability</th>
+          <th>Affected Software</th>
+          <th>CVSS</th>
+          <th>Score</th>
+          <th>Status</th>
+          <th>Published</th>
+        </tr>
+      </thead>
+      <tbody id="cveTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- =========== PANEL 3: LIVE MONITOR =========== -->
+<div id="panel-monitor" class="panel">
+  <div class="hero-strip">
+    <div>
+      <div class="hero-title">// LIVE SECURITY MONITOR</div>
+      <div class="hero-sub">Auto-refreshing event stream • 3s interval • Real-time alerts</div>
+    </div>
+    <div class="stat-chips">
+      <div class="stat-chip"><div class="counter" id="eventsPerMin" style="color:var(--accent)">0</div><div class="lbl">Events/min</div></div>
+      <div class="stat-chip"><div class="counter" id="blockedCount" style="color:var(--red)">0</div><div class="lbl">Blocked</div></div>
+      <div class="stat-chip"><div class="counter" id="alertCount" style="color:var(--orange)">0</div><div class="lbl">Alerts</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="gap:1rem; align-items:start;">
+    <div>
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-header">
+          <div class="card-title"><div class="dot dot-red" style="animation:ping 1s infinite"></div>LIVE EVENT LOG</div>
+          <div style="display:flex;gap:8px;">
+            <button class="filter-btn active" id="monPauseBtn" onclick="togglePause()">⏸ Pause</button>
+            <button class="filter-btn" onclick="clearLog()">Clear</button>
+          </div>
+        </div>
+        <div class="terminal" id="eventLog"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><div class="dot dot-blue"></div>NETWORK TRAFFIC</div>
+        </div>
+        <div class="chart-container" style="height:160px;">
+          <canvas id="trafficChart" role="img" aria-label="Line chart showing real-time network traffic">Real-time network traffic chart.</canvas>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><div class="dot dot-green"></div>SYSTEM HEALTH</div>
+        </div>
+        <div id="systemHealth"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><div class="dot dot-yellow"></div>GEOLOCATION ATTACKS</div>
+        </div>
+        <div class="world-map-wrap">
+          <svg id="worldMap" viewBox="0 0 600 300" style="width:100%;"></svg>
+        </div>
+        <div id="attackSourceList" style="margin-top:0.8rem;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== PANEL 4: IP INTEL =========== -->
+<div id="panel-ip" class="panel">
+  <div class="hero-strip">
+    <div>
+      <div class="hero-title">// IP &amp; SOURCE INTELLIGENCE</div>
+      <div class="hero-sub">WHOIS lookup • Geolocation • Blacklist check • Reputation scoring</div>
+    </div>
+    <div class="stat-chips">
+      <div class="stat-chip"><div class="counter" style="color:var(--red)">14.2M</div><div class="lbl">Blacklisted IPs</div></div>
+      <div class="stat-chip"><div class="counter" style="color:var(--orange)">3.8K</div><div class="lbl">New Today</div></div>
+      <div class="stat-chip"><div class="counter" style="color:var(--green)">99.1%</div><div class="lbl">DB Coverage</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="gap:1rem; align-items:start;">
+    <div>
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-header">
+          <div class="card-title"><div class="dot dot-blue"></div>IP / DOMAIN LOOKUP</div>
+        </div>
+        <div class="ip-input-row">
+          <input class="ip-input" id="ipInput" value="185.220.101.42" placeholder="Enter IP, domain, or hash..." />
+          <button class="btn-primary" onclick="lookupIP()">SCAN →</button>
+        </div>
+        <div id="ipResult"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><div class="dot dot-red"></div>RECENT LOOKUPS</div>
+        </div>
+        <div id="recentLookups"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-header">
+          <div class="card-title"><div class="dot dot-yellow"></div>BLACKLIST DATABASES</div>
+        </div>
+        <div id="blacklistStatus"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><div class="dot dot-green"></div>REPUTATION TREND</div>
+        </div>
+        <div class="chart-container" style="height:160px;">
+          <canvas id="repChart" role="img" aria-label="Line chart showing IP reputation score over time">IP reputation trend over past 30 days.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== PANEL 5: KNOWLEDGE HUB =========== -->
+<div id="panel-knowledge" class="panel">
+  <div class="hero-strip">
+    <div>
+      <div class="hero-title">// CYBER SECURITY KNOWLEDGE HUB</div>
+      <div class="hero-sub">Glossary • Attack types • Defense frameworks • Learning resources</div>
+    </div>
+    <div class="stat-chips">
+      <div class="stat-chip"><div class="counter" style="color:var(--accent)">200+</div><div class="lbl">Terms</div></div>
+      <div class="stat-chip"><div class="counter" style="color:var(--blue)">18</div><div class="lbl">Frameworks</div></div>
+      <div class="stat-chip"><div class="counter" style="color:var(--green)">42</div><div class="lbl">Attack Types</div></div>
+    </div>
+  </div>
+
+  <input class="glossary-search" id="glosSearch" placeholder="Search terms, acronyms, attack types..." oninput="filterGlossary()" />
+
+  <div class="sec-label">ATTACK TECHNIQUES & VULNERABILITIES</div>
+  <div class="glossary-grid" id="glossaryGrid"></div>
+
+  <div class="sec-label" style="margin-top:2rem;">SECURITY FRAMEWORKS</div>
+  <div class="grid-3" style="gap:1rem;" id="frameworksGrid"></div>
+
+  <div class="sec-label" style="margin-top:2rem;">LEARNING RESOURCES</div>
+  <div class="grid-4" style="gap:1rem;">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:1.6rem;margin-bottom:8px;">🎓</div>
+      <div style="font-family:var(--mono);font-size:0.78rem;color:var(--accent);margin-bottom:4px;">CISA Training</div>
+      <div style="font-size:0.72rem;color:var(--text2);">Free government cybersecurity courses</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:1.6rem;margin-bottom:8px;">📚</div>
+      <div style="font-family:var(--mono);font-size:0.78rem;color:var(--blue);margin-bottom:4px;">OWASP Docs</div>
+      <div style="font-size:0.72rem;color:var(--text2);">Web security testing guide & top 10</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:1.6rem;margin-bottom:8px;">🔬</div>
+      <div style="font-family:var(--mono);font-size:0.78rem;color:var(--orange);margin-bottom:4px;">TryHackMe</div>
+      <div style="font-size:0.72rem;color:var(--text2);">Hands-on labs & CTF challenges</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:1.6rem;margin-bottom:8px;">🛡️</div>
+      <div style="font-family:var(--mono);font-size:0.78rem;color:var(--accent4);margin-bottom:4px;">MITRE ATT&CK</div>
+      <div style="font-size:0.72rem;color:var(--text2);">Adversary tactics & techniques matrix</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHART.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<script>
+/* ===== DATA ===== */
+const newsData = [
+  { title:"Critical RCE vulnerability in OpenSSH affects 14M servers worldwide", desc:"CVE-2025-6492 allows unauthenticated remote code execution. CVSS 9.8. Patch available.", severity:"critical", category:"cve", source:"NVD", time:"2m ago", cve:"CVE-2025-6492" },
+  { title:"LockBit 4.0 ransomware group resurfaces with new infrastructure", desc:"FBI and Europol tracking new C2 servers across 6 countries. 23 organizations targeted.", severity:"critical", category:"malware", source:"Bleeping Computer", time:"11m ago" },
+  { title:"Microsoft Patch Tuesday: 73 vulnerabilities patched, 9 critical", desc:"Includes patches for NTLM relay, Exchange Server RCE, and Hyper-V escape.", severity:"high", category:"cve", source:"Microsoft MSRC", time:"34m ago" },
+  { title:"Midnight Blizzard APT targets NATO member defense contractors", desc:"Russian state-sponsored group uses spear-phishing with trojanized PDF lures.", severity:"high", category:"apt", source:"CrowdStrike", time:"1h ago" },
+  { title:"New supply chain attack targets npm packages with 50K daily downloads", desc:"Malicious code injects cryptominer into 12 popular packages. npm registry notified.", severity:"high", category:"malware", source:"Snyk", time:"2h ago" },
+  { title:"CISA adds 4 new exploited vulnerabilities to KEV catalog", desc:"Includes Apache Log4j variant, Citrix ADC, and two Ivanti Connect Secure CVEs.", severity:"medium", category:"cve", source:"CISA", time:"3h ago" },
+  { title:"Phishing campaign impersonates IRS targeting US taxpayers", desc:"Over 45,000 credential-harvest attempts identified this week using lookalike domains.", severity:"medium", category:"phishing", source:"Proofpoint", time:"4h ago" },
+  { title:"OWASP releases updated Top 10 for LLM security", desc:"New additions include prompt injection, training data poisoning, and model theft.", severity:"low", category:"research", source:"OWASP", time:"5h ago" },
+  { title:"Zero-day in Fortinet FortiOS actively exploited in the wild", desc:"CVSS 9.1 heap buffer overflow. Fortinet urges immediate patching of all appliances.", severity:"critical", category:"cve", source:"FortiGuard Labs", time:"6h ago", cve:"CVE-2025-5981" },
+  { title:"Cl0p ransomware uses MOVEit-style zero-day in new wave", desc:"Hundreds of organizations across healthcare and finance sectors breached in 72h.", severity:"critical", category:"ransomware", source:"Mandiant", time:"7h ago" },
+  { title:"North Korea's Lazarus Group deploys new macOS stealer malware", desc:"KANDYKORN variant targets crypto wallet seed phrases and exchange API keys.", severity:"high", category:"apt", source:"Elastic Security", time:"8h ago" },
+  { title:"Google Project Zero discloses Chrome V8 type confusion vulnerability", desc:"90-day disclosure window expired. PoC published. Chrome 125.0.6422.75 patches this.", severity:"high", category:"cve", source:"Project Zero", time:"9h ago", cve:"CVE-2025-4859" },
+];
+
+const cveData = [
+  { id:"CVE-2025-6492", software:"OpenSSH < 9.8", vuln:"Heap buffer overflow in sshd", cvss:9.8, color:"#ff4d4d", status:"CRITICAL" },
+  { id:"CVE-2025-5981", software:"FortiOS 7.4.x", vuln:"Heap-based buffer overflow", cvss:9.1, color:"#ff4d4d", status:"CRITICAL" },
+  { id:"CVE-2025-4859", software:"Chrome V8 Engine", vuln:"Type confusion vulnerability", cvss:8.8, color:"#ff8c42", status:"HIGH" },
+  { id:"CVE-2025-4712", software:"Apache HTTP 2.4.58", vuln:"Server-side request forgery", cvss:7.5, color:"#ff8c42", status:"HIGH" },
+  { id:"CVE-2025-3344", software:"VMware vCenter", vuln:"Authentication bypass", cvss:6.8, color:"#ffd700", status:"MEDIUM" },
+  { id:"CVE-2025-2201", software:"Cisco IOS XE", vuln:"Command injection in web UI", cvss:9.9, color:"#ff4d4d", status:"CRITICAL" },
+  { id:"CVE-2025-1872", software:"Ivanti Connect Secure", vuln:"Path traversal leading to RCE", cvss:8.1, color:"#ff8c42", status:"HIGH" },
+];
+
+const glossaryData = [
+  { term:"Zero-Day (0-Day)", category:"Vulnerability", def:"A software vulnerability unknown to the vendor with no official patch. Attackers exploit it before defenders can respond.", sev:"critical" },
+  { term:"Ransomware", category:"Malware", def:"Malicious software that encrypts victim data, demanding cryptocurrency payment for decryption keys.", sev:"critical" },
+  { term:"SQL Injection", category:"Attack Type", def:"Code injection technique exploiting insecure database queries to read, modify, or delete database contents.", sev:"high" },
+  { term:"Man-in-the-Middle", category:"Attack Type", def:"Attacker secretly intercepts and potentially alters communications between two parties who believe they are directly communicating.", sev:"high" },
+  { term:"APT (Advanced Persistent Threat)", category:"Threat Actor", def:"Sophisticated, long-term targeted attack campaigns, typically state-sponsored, focused on espionage or sabotage.", sev:"critical" },
+  { term:"Lateral Movement", category:"Tactic", def:"Techniques attackers use to progressively move through a network after initial compromise, seeking high-value targets.", sev:"high" },
+  { term:"DDoS (Distributed Denial of Service)", category:"Attack Type", def:"Overwhelming a target server or network with traffic from multiple compromised systems, causing service disruption.", sev:"high" },
+  { term:"Social Engineering", category:"Attack Type", def:"Psychological manipulation of people into performing actions or revealing confidential information rather than exploiting software.", sev:"high" },
+  { term:"Privilege Escalation", category:"Tactic", def:"Exploiting bugs or misconfigurations to gain elevated system permissions beyond what was initially granted.", sev:"high" },
+  { term:"SSRF (Server-Side Request Forgery)", category:"Vulnerability", def:"Forces the server to make HTTP requests to unintended locations, potentially accessing internal services or metadata APIs.", sev:"medium" },
+  { term:"Buffer Overflow", category:"Vulnerability", def:"Writing data beyond allocated memory boundaries, potentially enabling arbitrary code execution or system crash.", sev:"critical" },
+  { term:"Supply Chain Attack", category:"Attack Type", def:"Compromising software or hardware components at the source, infecting all downstream users who install or use those components.", sev:"critical" },
+];
+
+const frameworks = [
+  { name:"MITRE ATT&CK", desc:"Globally-accessible knowledge base of adversary tactics and techniques. Foundation for threat modeling.", color:"var(--accent)" },
+  { name:"NIST CSF 2.0", desc:"Cybersecurity Framework with Govern, Identify, Protect, Detect, Respond, and Recover functions.", color:"var(--blue)" },
+  { name:"OWASP Top 10", desc:"Standard awareness document for developers listing the most critical web application security risks.", color:"var(--orange)" },
+  { name:"ISO/IEC 27001", desc:"International standard for information security management systems (ISMS) with certification pathway.", color:"var(--accent4)" },
+  { name:"CIS Controls v8", desc:"18 prioritized safeguards to defend against the most prevalent cyber attacks.", color:"var(--accent)" },
+  { name:"Zero Trust Architecture", desc:"Security model assuming no implicit trust, requiring continuous verification of all users and devices.", color:"var(--red)" },
+];
+
+/* ===== STATE ===== */
+let currentFilter = 'all';
+let logPaused = false;
+let logLines = [];
+let blockedTotal = 0;
+let alertTotal = 0;
+let eventsCount = 0;
+let trafficChart, repChart;
+let trafficData = Array(20).fill(0).map(()=>Math.floor(Math.random()*60+20));
+let ipHistory = [];
+const recentIPList = ["185.220.101.42","103.25.162.0","45.142.212.100","194.165.16.11"];
+
+/* ===== UTILS ===== */
+function rand(min,max){return Math.floor(Math.random()*(max-min)+min);}
+function randChoice(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function animateCounter(el, target, suffix=''){
+  let cur=0; const step=Math.ceil(target/30);
+  const iv=setInterval(()=>{
+    cur=Math.min(cur+step,target);
+    el.textContent=cur+(suffix||'');
+    if(cur>=target)clearInterval(iv);
+  },30);
+}
+
+/* ===== CLOCK ===== */
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clockDisplay').textContent=
+    now.toISOString().slice(11,19);
+}
+setInterval(updateClock,1000); updateClock();
+
+/* ===== NAV ===== */
+function showPanel(id, btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='analytics') initAnalytics();
+  if(id==='ip') initIP();
+  if(id==='knowledge') initKnowledge();
+}
+
+/* ===== NEWS PANEL ===== */
+function renderNews(){
+  const search=(document.getElementById('newsSearch')||{value:''}).value.toLowerCase();
+  let data=newsData.filter(n=>{
+    const matchFilter = currentFilter==='all'||n.severity===currentFilter||n.category===currentFilter;
+    const matchSearch = !search||n.title.toLowerCase().includes(search)||n.desc.toLowerCase().includes(search)||(n.cve||'').toLowerCase().includes(search);
+    return matchFilter&&matchSearch;
+  });
+  const feed=document.getElementById('newsFeed');
+  if(!feed)return;
+  feed.innerHTML=data.map(n=>`
+    <div class="news-item">
+      <div class="news-meta">
+        <span class="badge badge-${n.severity}">${n.severity.toUpperCase()}</span>
+        ${n.cve?`<span class="badge badge-info">${n.cve}</span>`:''}
+        <span class="badge" style="background:rgba(255,255,255,0.05);color:var(--text3);border:1px solid rgba(255,255,255,0.1);">${n.category.toUpperCase()}</span>
+        <span class="news-time">${n.time}</span>
+        <span class="news-source">• ${n.source}</span>
+      </div>
+      <div class="news-title">${n.title}</div>
+      <div class="news-desc">${n.desc}</div>
+    </div>
+  `).join('');
+}
+
+function setFilter(btn, filter){
+  currentFilter=filter;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderNews();
+}
+
+function filterNews(){ renderNews(); }
+
+function renderCVEList(){
+  const el=document.getElementById('cveList');
+  if(!el)return;
+  el.innerHTML=cveData.slice(0,5).map(c=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div>
+        <div style="font-family:var(--mono);font-size:0.75rem;color:var(--accent2);">${c.id}</div>
+        <div style="font-size:0.72rem;color:var(--text2);margin-top:2px;">${c.software}</div>
+      </div>
+      <div style="text-align:right;">
+        <span class="badge badge-${c.status.toLowerCase()}" style="font-size:0.6rem;">${c.status}</span>
+        <div style="font-family:var(--mono);font-size:0.78rem;font-weight:600;margin-top:3px;" style="color:${c.color};">${c.cvss}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderCategoryChart(){
+  const el=document.getElementById('categoryChart');
+  if(!el)return;
+  const cats=[
+    {label:'Ransomware',val:34,color:'#ff4d4d'},
+    {label:'APT / Nation-State',val:28,color:'#ff8c42'},
+    {label:'Phishing',val:52,color:'#ffd700'},
+    {label:'Supply Chain',val:19,color:'#00c8ff'},
+    {label:'Zero-Day',val:41,color:'#ff4d7e'},
+    {label:'DDoS',val:23,color:'#00ffb4'},
+  ];
+  el.innerHTML=cats.map(c=>`
+    <div class="bar-row">
+      <div class="bar-label">${c.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:${c.color};" data-target="${Math.round(c.val/60*100)}"></div></div>
+      <div class="bar-val" style="color:${c.color};">${c.val}</div>
+    </div>
+  `).join('');
+  setTimeout(()=>{
+    el.querySelectorAll('.bar-fill').forEach(b=>{
+      b.style.width=b.dataset.target+'%';
+    });
+  },100);
+}
+
+function initNews(){
+  renderNews();
+  renderCVEList();
+  renderCategoryChart();
+  const totEl=document.querySelector('.val-total');
+  const critEl=document.querySelector('.val-critical');
+  const cveEl=document.querySelector('.val-cve');
+  if(totEl) animateCounter(totEl,248);
+  if(critEl) animateCounter(critEl,17);
+  if(cveEl) animateCounter(cveEl,31);
+}
+
+/* ===== ANALYTICS PANEL ===== */
+let analyticsInited=false;
+function initAnalytics(){
+  if(analyticsInited)return;
+  analyticsInited=true;
+
+  // Severity bar chart
+  new Chart(document.getElementById('severityChart'),{
+    type:'bar',
+    data:{
+      labels:['Critical','High','Medium','Low'],
+      datasets:[{
+        label:'CVEs',
+        data:[42,87,134,61],
+        backgroundColor:['#ff4d4d','#ff8c42','#ffd700','#00e676'],
+        borderRadius:4, borderSkipped:false,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8896b0',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8896b0',font:{size:11}}}
+      }
+    }
+  });
+
+  // Attack vector doughnut
+  new Chart(document.getElementById('vectorChart'),{
+    type:'doughnut',
+    data:{
+      labels:['Network','Social Eng.','Supply Chain','Physical'],
+      datasets:[{
+        data:[54,22,16,8],
+        backgroundColor:['#00c8ff','#ff8c42','#ff4d7e','#ffd700'],
+        borderWidth:0, hoverOffset:4,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      cutout:'65%',
+      plugins:{
+        legend:{
+          display:true, position:'bottom',
+          labels:{color:'#8896b0',font:{size:11},padding:12,boxWidth:12,boxHeight:12}
+        }
+      }
+    }
+  });
+
+  // Timeline chart
+  const days=Array.from({length:30},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-29+i);
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  });
+  const tvals=Array.from({length:30},(_,i)=>rand(80,200)+Math.floor(i*2.5));
+  new Chart(document.getElementById('timelineChart'),{
+    type:'line',
+    data:{
+      labels:days,
+      datasets:[{
+        label:'Threats',
+        data:tvals,
+        borderColor:'#00ffb4',
+        backgroundColor:'rgba(0,255,180,0.08)',
+        fill:true, tension:0.4, pointRadius:0, borderWidth:2,
+      },{
+        label:'Patches',
+        data:Array.from({length:30},(_,i)=>rand(50,130)+Math.floor(i*1.5)),
+        borderColor:'#00c8ff',
+        backgroundColor:'rgba(0,200,255,0.05)',
+        fill:true, tension:0.4, pointRadius:0, borderWidth:1.5,
+        borderDash:[4,4],
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#8896b0',font:{size:11},boxWidth:14}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8896b0',font:{size:10},maxTicksLimit:6,autoSkip:true}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8896b0',font:{size:10}}}
+      }
+    }
+  });
+
+  // Sector bar chart
+  const sEl=document.getElementById('sectorChart');
+  if(sEl){
+    const sectors=[
+      {label:'Healthcare',val:89,color:'#ff4d4d'},
+      {label:'Finance',val:76,color:'#ff8c42'},
+      {label:'Government',val:64,color:'#ffd700'},
+      {label:'Education',val:51,color:'#00c8ff'},
+      {label:'Energy',val:47,color:'#ff4d7e'},
+      {label:'Retail',val:33,color:'#00ffb4'},
+    ];
+    sEl.innerHTML=sectors.map(s=>`
+      <div class="bar-row">
+        <div class="bar-label">${s.label}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%;background:${s.color};" data-target="${Math.round(s.val/89*100)}"></div></div>
+        <div class="bar-val" style="color:${s.color};">${s.val}</div>
+      </div>
+    `).join('');
+    setTimeout(()=>sEl.querySelectorAll('.bar-fill').forEach(b=>{b.style.width=b.dataset.target+'%';}),150);
+  }
+
+  // CVE table
+  const tbody=document.getElementById('cveTableBody');
+  if(tbody){
+    tbody.innerHTML=cveData.map(c=>`
+      <tr>
+        <td><span style="font-family:var(--mono);font-size:0.75rem;color:var(--accent2);">${c.id}</span></td>
+        <td style="color:var(--text);max-width:160px;">${c.vuln}</td>
+        <td style="color:var(--text2);font-size:0.75rem;">${c.software}</td>
+        <td>
+          <div class="cvss-bar">
+            <div class="cvss-track"><div class="cvss-fill" style="width:${c.cvss/10*100}%;background:${c.color};"></div></div>
+          </div>
+        </td>
+        <td><span style="font-family:var(--mono);font-weight:600;color:${c.color};">${c.cvss}</span></td>
+        <td><span class="badge badge-${c.status.toLowerCase()}">${c.status}</span></td>
+        <td style="font-size:0.72rem;color:var(--text3);">2025-06-${rand(10,15)}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+/* ===== LIVE MONITOR ===== */
+const logTemplates=[
+  ['CRIT','Brute-force detected','{{ip}} targeting SSH port 22 — 847 attempts in 60s'],
+  ['WARN','Suspicious outbound','Host 10.0.1.{{r}} connecting to known C2 {{ip}}'],
+  ['INFO','Port scan detected','{{ip}} scanning ports 80,443,8080,3389 — SYN flood pattern'],
+  ['OK','Threat blocked','Malicious payload from {{ip}} blocked by WAF rule #{{r}}'],
+  ['CRIT','SQL injection attempt','{{ip}} sent UNION SELECT payload to /api/v2/search'],
+  ['WARN','Anomalous traffic','10.0.0.{{r}} exceeded baseline by 340% — investigating'],
+  ['INFO','New TLS session','{{ip}} established TLS 1.3 session with expired cert chain'],
+  ['OK','IDS signature match','Blocked CVE-2025-{{r}} exploit attempt from {{ip}}'],
+  ['CRIT','Ransomware pattern','SMB lateral movement detected from 192.168.1.{{r}}'],
+  ['WARN','DNS tunneling','{{ip}} using DNS TXT queries for data exfil — blocked'],
+  ['INFO','Geo-block triggered','{{ip}} from RU/CN blocked by policy rule GEO-001'],
+  ['OK','Honeypot triggered','{{ip}} interacted with deception asset — flagged IOC'],
+];
+
+function randIP(){return `${rand(1,254)}.${rand(1,254)}.${rand(1,254)}.${rand(1,254)}`;}
+
+function addLog(){
+  if(logPaused)return;
+  const t=logTemplates[rand(0,logTemplates.length)];
+  const [type,event,msgTpl]=t;
+  const ip=randIP();
+  const msg=msgTpl.replace(/{{ip}}/g,ip).replace(/{{r}}/g,rand(1,999));
+  const now=new Date().toISOString().slice(11,19);
+  const typeColors={CRIT:'log-type-crit',WARN:'log-type-warn',INFO:'log-type-info',OK:'log-type-ok'};
+  const line=`<span class="log-line"><span class="log-time">[${now}]</span> <span class="${typeColors[type]}">[${type}]</span> <span style="color:var(--accent4);">${event}</span> — <span class="log-msg">${msg.replace(ip,`<span class="log-ip">${ip}</span>`)}</span></span>\n`;
+
+  logLines.unshift(line);
+  if(logLines.length>80)logLines.pop();
+
+  const el=document.getElementById('eventLog');
+  if(el){ el.innerHTML=logLines.join(''); }
+
+  if(type==='CRIT'||type==='WARN') alertTotal++;
+  if(type==='CRIT') blockedTotal++;
+  eventsCount++;
+
+  const ep=document.getElementById('eventsPerMin');
+  const bc=document.getElementById('blockedCount');
+  const ac=document.getElementById('alertCount');
+  if(ep)ep.textContent=rand(120,180);
+  if(bc)bc.textContent=blockedTotal;
+  if(ac)ac.textContent=alertTotal;
+}
+
+function togglePause(){
+  logPaused=!logPaused;
+  const btn=document.getElementById('monPauseBtn');
+  if(btn) btn.textContent=logPaused?'▶ Resume':'⏸ Pause';
+}
+function clearLog(){ logLines=[]; const el=document.getElementById('eventLog'); if(el)el.innerHTML=''; }
+
+function renderSystemHealth(){
+  const el=document.getElementById('systemHealth');
+  if(!el)return;
+  const metrics=[
+    {label:'Firewall',status:'Operational',val:99,color:'var(--green)'},
+    {label:'IDS/IPS Engine',status:'Operational',val:97,color:'var(--green)'},
+    {label:'SIEM Ingest',status:'High Load',val:88,color:'var(--orange)'},
+    {label:'Threat Intel Feed',status:'Operational',val:100,color:'var(--green)'},
+    {label:'VPN Gateway',status:'Degraded',val:71,color:'var(--red)'},
+    {label:'EDR Agents',status:'Operational',val:94,color:'var(--green)'},
+  ];
+  el.innerHTML=metrics.map(m=>`
+    <div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+        <span style="font-size:0.8rem;">${m.label}</span>
+        <span style="font-family:var(--mono);font-size:0.68rem;color:${m.color};">${m.status}</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${m.val}%;background:${m.color};"></div></div>
+    </div>
+  `).join('');
+}
+
+function drawWorldMap(){
+  const svg=document.getElementById('worldMap');
+  if(!svg)return;
+  // Simplified world map with attack dots
+  svg.innerHTML=`
+    <rect width="600" height="300" fill="#060a12"/>
+    <text x="300" y="150" text-anchor="middle" fill="rgba(0,255,180,0.08)" font-family="monospace" font-size="11">
+      [world map — attack origin visualization]
+    </text>
+    ${[
+      [95,120,'RU',12,'#ff4d4d'],
+      [340,80,'US',8,'#ff8c42'],
+      [440,135,'CN',15,'#ff4d4d'],
+      [280,200,'NG',6,'#ffd700'],
+      [310,130,'EU',10,'#ff8c42'],
+      [490,200,'IN',7,'#ffd700'],
+      [200,170,'BR',5,'#00c8ff'],
+      [420,90,'KP',11,'#ff4d4d'],
+    ].map(([x,y,cc,r,col])=>`
+      <circle cx="${x}" cy="${y}" r="${r}" fill="${col}" opacity="0.7"/>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${col}" stroke-width="1" opacity="0.4">
+        <animate attributeName="r" from="${r}" to="${r*2.5}" dur="${1+Math.random()}s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" from="0.6" to="0" dur="${1+Math.random()}s" repeatCount="indefinite"/>
+      </circle>
+      <text x="${x+r+4}" y="${y+4}" fill="${col}" font-family="monospace" font-size="9" opacity="0.8">${cc}</text>
+    `).join('')}
+  `;
+}
+
+function renderAttackSources(){
+  const el=document.getElementById('attackSourceList');
+  if(!el)return;
+  const sources=[
+    {country:'China (CN)',count:2841,color:'#ff4d4d'},
+    {country:'Russia (RU)',count:1923,color:'#ff4d4d'},
+    {country:'North Korea (KP)',count:1204,color:'#ff4d4d'},
+    {country:'United States (US)',count:891,color:'#ff8c42'},
+    {country:'Nigeria (NG)',count:567,color:'#ffd700'},
+  ];
+  el.innerHTML=sources.map(s=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;">
+      <span style="font-size:0.75rem;color:var(--text2);">${s.country}</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:80px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+          <div style="width:${s.count/2841*100}%;height:100%;background:${s.color};border-radius:2px;"></div>
+        </div>
+        <span style="font-family:var(--mono);font-size:0.72rem;color:${s.color};">${s.count.toLocaleString()}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function initTrafficChart(){
+  const ctx=document.getElementById('trafficChart');
+  if(!ctx||trafficChart)return;
+  trafficChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:Array(20).fill(''),
+      datasets:[
+        {label:'Inbound',data:[...trafficData],borderColor:'#00c8ff',fill:false,tension:0.4,pointRadius:0,borderWidth:1.5},
+        {label:'Blocked',data:trafficData.map(v=>Math.floor(v*0.3)),borderColor:'#ff4d4d',fill:false,tension:0.4,pointRadius:0,borderWidth:1.5,borderDash:[3,3]},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:0},
+      plugins:{legend:{labels:{color:'#8896b0',font:{size:10},boxWidth:12}}},
+      scales:{
+        x:{display:false},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8896b0',font:{size:10}}}
+      }
+    }
+  });
+}
+
+function updateTrafficChart(){
+  if(!trafficChart)return;
+  trafficData.shift();
+  trafficData.push(rand(20,120));
+  trafficChart.data.datasets[0].data=[...trafficData];
+  trafficChart.data.datasets[1].data=trafficData.map(v=>Math.floor(v*0.3));
+  trafficChart.update('none');
+}
+
+/* ===== IP PANEL ===== */
+let ipInited=false;
+const ipDatabase={
+  "185.220.101.42":{ country:"Russia", isp:"Tor Exit Node", org:"Anonymous", type:"Tor", risk:"CRITICAL", score:98, blacklisted:true, openPorts:"80,443,9001", lastSeen:"2025-06-15 14:23 UTC", asn:"AS24940" },
+  "103.25.162.0":{ country:"China", isp:"CHINANET", org:"China Telecom", type:"Datacenter", risk:"HIGH", score:84, blacklisted:true, openPorts:"22,80,443", lastSeen:"2025-06-15 13:11 UTC", asn:"AS4134" },
+  "45.142.212.100":{ country:"Netherlands", isp:"ColoCrossing", org:"VPS Provider", type:"Hosting", risk:"HIGH", score:76, blacklisted:false, openPorts:"22,443,8080", lastSeen:"2025-06-15 12:44 UTC", asn:"AS8100" },
+  "8.8.8.8":{ country:"United States", isp:"Google LLC", org:"Google Public DNS", type:"DNS Resolver", risk:"LOW", score:2, blacklisted:false, openPorts:"53,443", lastSeen:"2025-06-15 14:30 UTC", asn:"AS15169" },
+};
+
+function lookupIP(){
+  const val=document.getElementById('ipInput').value.trim();
+  const result=document.getElementById('ipResult');
+  if(!result)return;
+
+  result.innerHTML=`<div style="padding:1rem;text-align:center;font-family:var(--mono);font-size:0.75rem;color:var(--text2);">⏳ Scanning ${val}...</div>`;
+
+  setTimeout(()=>{
+    const data=ipDatabase[val]||{
+      country:randChoice(['Germany','Ukraine','Brazil','Iran','Vietnam']),
+      isp:'Unknown ISP', org:'Unknown Org', type:'Unknown',
+      risk:randChoice(['MEDIUM','HIGH','CRITICAL']),
+      score:rand(40,95), blacklisted:Math.random()>0.4,
+      openPorts:`${rand(20,25)},80,443`, lastSeen:'2025-06-15 '+rand(10,14)+':'+rand(10,59)+' UTC',
+      asn:'AS'+rand(10000,60000)
+    };
+    const riskColors={LOW:'var(--green)',MEDIUM:'var(--accent4)',HIGH:'var(--orange)',CRITICAL:'var(--red)'};
+    const riskBg={LOW:'rgba(0,230,118,0.1)',MEDIUM:'rgba(255,215,0,0.1)',HIGH:'rgba(255,140,66,0.1)',CRITICAL:'rgba(255,77,77,0.1)'};
+    const rc=riskColors[data.risk]||'var(--text)';
+
+    result.innerHTML=`
+      <div class="ip-result-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <div>
+            <div style="font-family:var(--mono);font-size:1rem;font-weight:600;color:var(--accent2);">${val}</div>
+            <div style="font-size:0.72rem;color:var(--text2);margin-top:2px;">ASN: ${data.asn} • ${data.type}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:var(--mono);font-size:2rem;font-weight:700;color:${rc};">${data.score}</div>
+            <div style="font-size:0.65rem;color:var(--text3);">RISK SCORE</div>
+          </div>
+        </div>
+        ${[
+          ['Country / Region',data.country],
+          ['ISP / Carrier',data.isp],
+          ['Organization',data.org],
+          ['IP Type',data.type],
+          ['Open Ports',data.openPorts],
+          ['Last Seen',data.lastSeen],
+          ['Blacklisted',data.blacklisted?'<span style="color:var(--red);font-weight:600;">YES — Found in 4 databases</span>':'<span style="color:var(--green);">No</span>'],
+          ['Threat Level',`<span class="risk-pill" style="background:${riskBg[data.risk]};color:${rc};border:1px solid ${rc}22;">${data.risk}</span>`],
+        ].map(([k,v])=>`
+          <div class="ip-field-row">
+            <span class="ip-field-key">${k}</span>
+            <span class="ip-field-val">${v}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    // Add to history
+    if(!ipHistory.includes(val)){ipHistory.unshift(val); if(ipHistory.length>6)ipHistory.pop();}
+    renderRecentLookups();
+  },600);
+}
+
+function renderRecentLookups(){
+  const el=document.getElementById('recentLookups');
+  if(!el)return;
+  const list=[...recentIPList,...ipHistory].slice(0,6).filter((v,i,a)=>a.indexOf(v)===i);
+  el.innerHTML=list.map(ip=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <span style="font-family:var(--mono);font-size:0.78rem;color:var(--accent2);cursor:pointer;" onclick="document.getElementById('ipInput').value='${ip}';lookupIP();">${ip}</span>
+      <button class="filter-btn" style="padding:3px 10px;font-size:0.65rem;" onclick="document.getElementById('ipInput').value='${ip}';lookupIP();">Lookup</button>
+    </div>
+  `).join('');
+}
+
+function renderBlacklists(){
+  const el=document.getElementById('blacklistStatus');
+  if(!el)return;
+  const lists=[
+    {name:'Spamhaus',records:'2.1M',status:'Active',color:'var(--green)'},
+    {name:'AbuseIPDB',records:'4.8M',status:'Active',color:'var(--green)'},
+    {name:'EmergingThreats',records:'1.3M',status:'Active',color:'var(--green)'},
+    {name:'Feodo Tracker',records:'890K',status:'Active',color:'var(--green)'},
+    {name:'MalwareBazaar',records:'3.2M',status:'Sync',color:'var(--orange)'},
+    {name:'ThreatFox IOC',records:'1.7M',status:'Active',color:'var(--green)'},
+  ];
+  el.innerHTML=lists.map(l=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <div>
+        <div style="font-family:var(--mono);font-size:0.78rem;color:var(--text);">${l.name}</div>
+        <div style="font-size:0.68rem;color:var(--text3);">${l.records} records</div>
+      </div>
+      <span style="font-family:var(--mono);font-size:0.68rem;color:${l.color};">● ${l.status}</span>
+    </div>
+  `).join('');
+}
+
+function initRepChart(){
+  const ctx=document.getElementById('repChart');
+  if(!ctx||repChart)return;
+  const vals=[12,18,9,14,22,35,28,40,55,68,72,80,75,85,92,88,95,98,96,99,97,94,88,85,78,82,79,76,80,84];
+  repChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:Array(30).fill(''),
+      datasets:[{
+        label:'Risk Score',
+        data:vals,
+        borderColor:'#ff4d4d',
+        backgroundColor:'rgba(255,77,77,0.08)',
+        fill:true,tension:0.4,pointRadius:0,borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{display:false},
+        y:{min:0,max:100,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8896b0',font:{size:10}}}
+      }
+    }
+  });
+}
+
+function initIP(){
+  if(ipInited)return;
+  ipInited=true;
+  renderRecentLookups();
+  renderBlacklists();
+  initRepChart();
+  lookupIP();
+}
+
+/* ===== KNOWLEDGE HUB ===== */
+let knowInited=false;
+function initKnowledge(){
+  if(knowInited)return;
+  knowInited=true;
+  renderGlossary();
+  renderFrameworks();
+}
+
+function renderGlossary(){
+  const search=(document.getElementById('glosSearch')||{value:''}).value.toLowerCase();
+  const el=document.getElementById('glossaryGrid');
+  if(!el)return;
+  const filtered=glossaryData.filter(g=>
+    !search||g.term.toLowerCase().includes(search)||g.def.toLowerCase().includes(search)||g.category.toLowerCase().includes(search)
+  );
+  const sevColors={critical:'var(--red)',high:'var(--orange)',medium:'var(--accent4)'};
+  const sevBg={critical:'rgba(255,77,77,0.1)',high:'rgba(255,140,66,0.1)',medium:'rgba(255,215,0,0.08)'};
+  el.innerHTML=filtered.map(g=>`
+    <div class="glos-card">
+      <span class="glos-sev" style="color:${sevColors[g.sev]};background:${sevBg[g.sev]};border:1px solid ${sevColors[g.sev]}33;">${g.sev.toUpperCase()}</span>
+      <div class="glos-category">${g.category}</div>
+      <div class="glos-term">${g.term}</div>
+      <div class="glos-def">${g.def}</div>
+    </div>
+  `).join('');
+}
+
+function filterGlossary(){ renderGlossary(); }
+
+function renderFrameworks(){
+  const el=document.getElementById('frameworksGrid');
+  if(!el)return;
+  el.innerHTML=frameworks.map(f=>`
+    <div class="card" style="border-color:${f.color}22;">
+      <div style="font-family:var(--mono);font-size:0.82rem;font-weight:600;margin-bottom:8px;color:${f.color};">${f.name}</div>
+      <div style="font-size:0.75rem;color:var(--text2);line-height:1.5;">${f.desc}</div>
+    </div>
+  `).join('');
+}
+
+/* ===== MONITOR PANEL INIT ===== */
+let monitorInited=false;
+function ensureMonitorInit(){
+  if(monitorInited)return;
+  monitorInited=true;
+  renderSystemHealth();
+  drawWorldMap();
+  renderAttackSources();
+  initTrafficChart();
+}
+
+/* ===== AUTO-REFRESH (3s) ===== */
+setInterval(()=>{
+  const activePanel=document.querySelector('.panel.active');
+  if(!activePanel)return;
+  const id=activePanel.id;
+  if(id==='panel-news'){
+    const tag=document.getElementById('feedRefreshTag');
+    if(tag)tag.style.opacity=(tag.style.opacity==='0.4')?'1':'0.4';
+  }
+  if(id==='panel-monitor'){
+    ensureMonitorInit();
+    addLog(); addLog();
+    updateTrafficChart();
+  }
+},3000);
+
+// Also inject logs every 1.2s when on monitor
+setInterval(()=>{
+  const activePanel=document.querySelector('.panel.active');
+  if(activePanel&&activePanel.id==='panel-monitor'){
+    ensureMonitorInit();
+    addLog();
+  }
+},1200);
+
+/* ===== BOOT ===== */
+initNews();
+// Seed the log with some initial lines
+for(let i=0;i<15;i++) logLines.unshift('');
+</script>
+</body>
+</html>
